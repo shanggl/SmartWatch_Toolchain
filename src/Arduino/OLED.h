@@ -30,8 +30,8 @@ class Arduino_GFX {
   
     uint32_t write(uint8_t);
 
-    void print(char *str);
-    void println(char *str);
+    void print(const char *str);
+    void println(const char *str);
     
     void setCursor(int16_t x, int16_t y);
     void setTextColor(uint16_t c);

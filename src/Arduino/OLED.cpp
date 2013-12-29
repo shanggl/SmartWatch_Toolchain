@@ -443,11 +443,11 @@ uint32_t Arduino_GFX::write(uint8_t c) {
   return 1;
 }
 
-void Arduino_GFX::print(char *str) {
+void Arduino_GFX::print(const char *str) {
   while(*str != 0x00) write((uint8_t)*(str++));
 }
 
-void Arduino_GFX::println(char *str) {
+void Arduino_GFX::println(const char *str) {
   print(str);
   cursor_y += textsize*8;
   cursor_x = 0;
