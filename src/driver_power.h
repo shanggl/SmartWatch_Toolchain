@@ -48,6 +48,10 @@ extern const ClockDef_t sysclock_120m; // "High Speed"    120MHz
 void cpu_init(void);                     // Initialize CPU clock
 void cpu_reclock(const ClockDef_t *clk); // Change CPU clock speed
 
+// == LOW POWER MODE ENTRY/EXIT //
+void wake_source_set(uint8_t port, uint8_t pin);
+void wake_source_clear(uint8_t line);
+
 // == PMU POWER MANAGEMENT == //
 
 bool pmu_init(void);                     // Initialize Power Management Unit

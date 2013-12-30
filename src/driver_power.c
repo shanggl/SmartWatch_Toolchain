@@ -4,6 +4,9 @@
 #include <stm32f2xx_rcc.h>
 #include <stm32f2xx_pwr.h>
 #include <stm32f2xx_flash.h>
+#include <stm32f2xx_exti.h>
+#include <stm32f2xx_syscfg.h>
+
 #include "system.h"
 #include "driver_power.h"
 #include "driver_i2c.h"
@@ -71,6 +74,41 @@ void cpu_init(void) {
     // Set startup speed
     cpu_reclock(&sysclock_120m);
   }
+  
+  // enable SYSCFG clock
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+}
+
+// Configures a pin as an external wakeup event generator to exit SLEEP/STOP mode.
+
+void wake_source_set(uint8_t port, uint8_t pin) {
+  uint8_t exti_port = port;
+  uint8_t exti_pin = pin;
+  uint32_t exti_line = 1 << pin;
+
+  // Connect the EXTI line to the pin
+  SYSCFG_EXTILineConfig(exti_port, exti_pin);
+    
+  // Update the EXTI line event generation settings
+  EXTI_InitTypeDef EXTI_InitStructure;
+  EXTI_InitStructure.EXTI_Line = exti_line;
+  EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Event;
+  EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
+  EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+  EXTI_Init(&EXTI_InitStructure);
+}
+
+// Disables an external interrupt line as a wakeup event source
+void wake_source_clear(uint8_t line) {
+  uint32_t exti_line = 1 << line;
+  
+  // Update the EXTI line event generation settings
+  EXTI_InitTypeDef EXTI_InitStructure;
+  EXTI_StructInit(&EXTI_InitStructure);
+  
+  EXTI_InitStructure.EXTI_Line = exti_line;
+  EXTI_InitStructure.EXTI_LineCmd = DISABLE;
+  EXTI_Init(&EXTI_InitStructure);
 }
 
 static bool pmu_init_ok;
