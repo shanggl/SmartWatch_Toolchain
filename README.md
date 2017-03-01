@@ -26,3 +26,5 @@ Then simply, from the root of this repo:
 * `> make`  will build bin/firmware.bin  
 * `> make program`  will download to the device  
 * `> make clean` will clean it all up  
+
+在gcc-arm-none-eabi-5_4-2016q3	MacOs Sierra 环境下编译中，报random函数与stdlib的 _EXFUN(random (void)) 函数冲突需要修改Arduion.h 和Arduino.cpp 中的random（long howbig） 函数定义。暂时没找到更好方法
