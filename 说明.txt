@@ -1,0 +1,146 @@
+SONY SmartWatch  是索尼的一款很老的智能手表，采用STM32F2xxx 处理器，OLED 显示屏（1.3寸） 震动、光感和触摸屏，必须通过索尼SmartConnect 应用，蓝牙连接手表才能使用，但是兼容性很差，非索尼手机基本上连接不上。
+
+大神在github上以arduino 的架构，为手表写了一个固件，顺便分析其结构如下
+整体的软件栈： 
+
+                sketch + Arduino 
+                Battery\CPU\OLED 等硬件的面向对象化抽象
+                System C 抽象
+                具体的硬件driver 
+                STM32 硬件定义信息 
+
+本套ToolChain还是一个比较简陋的最小化软件栈，而且没提供蓝牙驱动，出了刷机做一些demo之外，其他的功能均未实现
+
+
+文件名	描述
+├── README.md                                                                                  	项目描述，简单介绍了项目的背景与使用方式
+├── flash.ld	链接LD的符号链接文件，在makefile LDFLAGS 中-T 引用，用来指明链接器生成的二进制可执行文件结构
+├── magic.bin	DFU 刷机的时候用的,makefile line: 263         @$(DFUUTIL) -d 0FCE:F0FA -a 0 -i 0 -s 0x080FFFFC -D magic.bin $@ 猜测是填充结束的，不知道对不对
+├── makefile	
+├── sketch	几个小应用的目录，采用的编程风格是Arduino的，ino里面是cpp文件，只定义start和loop两个函数，调用/src/Arduino/下的 CPU\OLED\Movement等对象
+│   ├── accel_info.ino	
+│   ├── copper_bars.ino	
+│   ├── cpu_speed.ino	
+│   ├── drawing.ino	
+│   ├── ssw.ino	
+│   ├── sys_info.ino	
+│   ├── usbdebug.ino	
+│   └── watch.ino	
+├── src	系统源码目录
+│   ├── Arduino	
+│   ├── Arduino.h	主头文件，include system.h 和系统基本头文件
+│   │   ├── Arduino.cpp	主程序在文件最后#include 前面sketch 等ino文件，在main函数中启动，同时定义了标准的启动、关机流程
+│   │   ├── Battery.cpp	电池
+│   │   ├── Battery.h	
+│   │   ├── CPU.cpp	CPU
+│   │   ├── CPU.h	
+│   │   ├── DateTime.cpp	日期
+│   │   ├── DateTime.h	
+│   │   ├── Movement.cpp	传感器
+│   │   ├── Movement.h	
+│   │   ├── OLED.cpp	屏幕
+│   │   ├── OLED.h	
+│   │   ├── Touch.cpp	触摸
+│   │   └── Touch.h	
+│   ├── system.c	硬件系统抽象，基本是阵脚定义，系统硬件函数的封装
+│   ├── system.h	硬件阵脚定义，include 下面的driver 文件
+│   ├── accel_defines.h	加速器定义信息
+│   ├── driver_accel.c	加速器驱动，引用STM32F2xx_StdPeriph_Driver
+│   ├── driver_accel.h	
+│   ├── driver_adc.c	模拟、数字传感器
+│   ├── driver_adc.h	
+│   ├── driver_display.c	显示器
+│   ├── driver_display.h	
+│   ├── driver_i2c.c	IIC 总线
+│   ├── driver_i2c.h	
+│   ├── driver_power.c	电源管理
+│   ├── driver_power.h	
+│   ├── driver_rtc.c	系统时钟
+│   ├── driver_rtc.h	
+│   ├── driver_touch.c	触摸屏
+│   ├── driver_touch.h	
+│   ├── driver_vcp.c	USB VCP 
+│   ├── driver_vcp.h	
+│   ├── pmu_defines.h	电源定义
+│   ├── touch_defines.h	
+│   ├── target	CM-3cpu 本身的驱动，来自ARM
+│   │   ├── core_cm3.h	
+│   │   ├── core_cmFunc.h	
+│   │   ├── core_cmInstr.h	
+│   │   ├── startup_stm32f2xx.S	
+│   │   ├── stm32f2xx.h	
+│   │   ├── stm32f2xx_conf.h	
+│   │   ├── syscalls.c	
+│   │   ├── system_stm32f2xx.c	
+│   │   └── system_stm32f2xx.h	
+│   ├── STM32F2xx_StdPeriph_Driver	STM32 CPU的驱动程序
+│   │   ├── inc	
+│   │   │   ├── misc.h	
+│   │   │   ├── stm32f2xx_adc.h	
+│   │   │   ├── stm32f2xx_can.h	
+│   │   │   ├── stm32f2xx_crc.h	
+│   │   │   ├── stm32f2xx_cryp.h	
+│   │   │   ├── stm32f2xx_dac.h	
+│   │   │   ├── stm32f2xx_dbgmcu.h	
+│   │   │   ├── stm32f2xx_dcmi.h	
+│   │   │   ├── stm32f2xx_dma.h	
+│   │   │   ├── stm32f2xx_exti.h	
+│   │   │   ├── stm32f2xx_flash.h	
+│   │   │   ├── stm32f2xx_fsmc.h	
+│   │   │   ├── stm32f2xx_gpio.h	
+│   │   │   ├── stm32f2xx_hash.h	
+│   │   │   ├── stm32f2xx_i2c.h	
+│   │   │   ├── stm32f2xx_iwdg.h	
+│   │   │   ├── stm32f2xx_pwr.h	
+│   │   │   ├── stm32f2xx_rcc.h	
+│   │   │   ├── stm32f2xx_rng.h	
+│   │   │   ├── stm32f2xx_rtc.h	
+│   │   │   ├── stm32f2xx_sdio.h	
+│   │   │   ├── stm32f2xx_spi.h	
+│   │   │   ├── stm32f2xx_syscfg.h	
+│   │   │   ├── stm32f2xx_tim.h	
+│   │   │   ├── stm32f2xx_usart.h	
+│   │   │   └── stm32f2xx_wwdg.h	
+│   │   └── src	
+│   │       ├── misc.c	
+│   │       ├── stm32f2xx_adc.c	
+│   │       ├── stm32f2xx_can.c	
+│   │       ├── stm32f2xx_crc.c	
+│   │       ├── stm32f2xx_cryp.c	
+│   │       ├── stm32f2xx_cryp_aes.c	
+│   │       ├── stm32f2xx_cryp_des.c	
+│   │       ├── stm32f2xx_cryp_tdes.c	
+│   │       ├── stm32f2xx_dac.c	
+│   │       ├── stm32f2xx_dbgmcu.c	
+│   │       ├── stm32f2xx_dcmi.c	
+│   │       ├── stm32f2xx_dma.c	
+│   │       ├── stm32f2xx_exti.c	
+│   │       ├── stm32f2xx_flash.c	
+│   │       ├── stm32f2xx_fsmc.c	
+│   │       ├── stm32f2xx_gpio.c	
+│   │       ├── stm32f2xx_hash.c	
+│   │       ├── stm32f2xx_hash_md5.c	
+│   │       ├── stm32f2xx_hash_sha1.c	
+│   │       ├── stm32f2xx_i2c.c	
+│   │       ├── stm32f2xx_iwdg.c	
+│   │       ├── stm32f2xx_pwr.c	
+│   │       ├── stm32f2xx_rcc.c	
+│   │       ├── stm32f2xx_rng.c	
+│   │       ├── stm32f2xx_rtc.c	
+│   │       ├── stm32f2xx_sdio.c	
+│   │       ├── stm32f2xx_spi.c	
+│   │       ├── stm32f2xx_syscfg.c	
+│   │       ├── stm32f2xx_tim.c	
+│   │       ├── stm32f2xx_usart.c	
+│   │       └── stm32f2xx_wwdg.c	
+│   ├── STM32_USB_Device_Library	
+│   ├── STM32_USB_OTG_Driver	
+│   └── vcp	
+│       ├── usb_bsp.c	
+│       ├── usb_conf.h	
+│       ├── usb_irq_handlers.c	
+│       ├── usbd_cdc_vcp.c	
+│       ├── usbd_conf.h	
+│       ├── usbd_desc.c	
+│       ├── usbd_desc.h	
+│       └── usbd_usr.c
